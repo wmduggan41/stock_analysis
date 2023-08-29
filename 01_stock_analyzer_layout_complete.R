@@ -19,7 +19,7 @@ source(file = "00_scripts/stock_analysis_functions.R")
 
 stock_list_tbl <- get_stock_list("SP500")
 
-stock_data_tbl <- get_stock_data("AAPL", from = "2018-01-01", to = "2019-01-01")
+stock_data_tbl <- get_stock_data("AAPL", from = "2018-01-01", to = "2023-08-01")
 
 # UI ----
 ui <- fluidPage(
