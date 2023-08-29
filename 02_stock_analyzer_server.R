@@ -19,11 +19,9 @@ source(file = "00_scripts/stock_analysis_functions.R")
 
 stock_list_tbl <- get_stock_list("SP500")
 
-stock_data_tbl <- get_stock_data("AAPL", from = "2018-01-01", to = "2019-01-01")
-
 # UI ----
 ui <- fluidPage(
-    title = "Stock Analyzer",
+    title = "Stock Analyzer", 
     
     # 1.0 HEADER ----
     div(
@@ -54,9 +52,9 @@ ui <- fluidPage(
         column(
             width = 8, 
             div(
-                div(h4("Placeholder - Stock Selected is...")),
+                div(h4(textOutput(outputId = "plot_header"))),
                 div(
-                    stock_data_tbl %>% plot_stock_data()
+                    plotlyOutput(outputId = "plotly_plot")
                 )
             )
         )
@@ -69,7 +67,7 @@ ui <- fluidPage(
             div(
                 div(h4("Analyst Commentary")),
                 div(
-                    stock_data_tbl %>% generate_commentary(user_input = "Placeholder")
+                    textOutput(outputId = "analyst_commentary")
                 )
             )
         )
@@ -78,6 +76,42 @@ ui <- fluidPage(
 
 # SERVER ----
 server <- function(input, output, session) {
+    
+    # Stock Symbol ----
+    stock_symbol <- eventReactive(input$analyze, {
+        get_symbol_from_user_input(input$stock_selection)
+    }, ignoreNULL = FALSE)
+    
+    # User Input ----
+    stock_selection_triggered <- eventReactive(input$analyze, {
+        input$stock_selection
+    }, ignoreNULL = FALSE)
+    
+    
+    # Get Stock Data ----
+    stock_data_tbl <- reactive({
+        stock_symbol() %>% 
+            get_stock_data(
+                from = today() - days(180), 
+                to   = today(),
+                mavg_short = 20,
+                mavg_long  = 50)
+    })
+    
+    # Plot Header ----
+    output$plot_header <- renderText({
+        stock_selection_triggered()
+    })
+    
+    # Plotly Plot ----
+    output$plotly_plot <- renderPlotly({
+        stock_data_tbl() %>% plot_stock_data()
+    })
+    
+    # Generate Commentary ----
+    output$analyst_commentary <- renderText({
+        generate_commentary(data = stock_data_tbl(), user_input = stock_selection_triggered())
+    })
     
 }
 
