@@ -6,14 +6,14 @@
 # APPLICATION DESCRIPTION ----
 # - The user will select 1 stock from the SP 500 stock index
 # - The functionality is designed to pull the past 180 days of stock data
-# - Implement 2 moving averages - short (fast) and long (slow)
-# - Produce a timeseries visualization
-# - Produce automated commentary based on the moving averages
+# - We will implement 2 moving averages - short (fast) and long (slow)
+# - We will produce a timeseries visualization
+# - We will produce automated commentary based on the moving averages
 
 # REPRODUCIBILITY REQUIREMENTS
 # - The functionality is designed to pull the past 180 days of stock data from today's date
 # - Because of this, your analysis may differ from mine
-# - To reproduce my analysis, replace today() with ymd("2023-07-19")
+# - To reproduce my analysis, replace today() with ymd("2019-08-20")
 
 # LIBRARIES ----
 library(plotly)
@@ -47,7 +47,6 @@ get_stock_list("DOW")
 get_stock_list("SP500")
 
 
-
 # 2.0 EXTRACT SYMBOL BASED ON USER INPUT ----
 
 user_input <- "AAPL, Apple Inc."
@@ -62,12 +61,10 @@ get_symbol_from_user_input <- function(user_input) {
 
 "AAPL, Apple Inc." %>% get_symbol_from_user_input()
 
-
-
 # 3.0 GET STOCK DATA ----
 
 from  <- today() - days(180) 
-to    <- today() #"2023-08-15"
+to    <- today() # "2019-08-20"
 
 "AAPL" %>% 
     tq_get(get = "stock.prices", from = from, to = to) %>%
@@ -88,8 +85,7 @@ get_stock_data <- function(stock_symbol,
     
 }
 
-stock_data_tbl <- get_stock_data("AAPL", from = "2023-01-01", to = "2023-08-01", mavg_short = 5, mavg_long = 8)
-
+stock_data_tbl <- get_stock_data("AAPL", from = "2018-01-01", to = "2018-06-30", mavg_short = 5, mavg_long = 8)
 
 
 # 4.0 PLOT STOCK DATA ----
@@ -125,8 +121,6 @@ plot_stock_data(stock_data_tbl)
 "AAPL" %>% 
     get_stock_data() %>%
     plot_stock_data()
-
-
 
 # 5.0 GENERATE COMMENTARY ----
 
@@ -174,7 +168,7 @@ get_stock_list("SP500")
 
 "ABT, Abbott Laboratories" %>% 
     get_symbol_from_user_input() %>%
-    get_stock_data(from = "2022-01-01", to = "2023-01-01") %>%
+    get_stock_data(from = "2018-01-01", to = "2019-01-01") %>%
     # plot_stock_data()
     generate_commentary(user_input = "ABT, Abbott Laboratories")
 
