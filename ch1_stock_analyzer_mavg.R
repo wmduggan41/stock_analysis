@@ -31,8 +31,8 @@ ui <- fluidPage(
     
     # 1.0 HEADER ----
     div(
-        h1("Stock Analyzer", "by Business Science"),
-        p("This is the first mini-project completed in our", "Expert Shiny Applications Course (DS4B 202-R)")
+        h1("Stock Analyzer", "by WM Duggan"),
+        p("This is the first mini-project completed in the", "Expert Shiny Applications Course (DS4B 202-R)")
     ),
     
     # 2.0 APPLICATION UI -----
