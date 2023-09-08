@@ -16,6 +16,7 @@
 library(shiny)
 library(shinyWidgets)
 library(shinythemes)
+library(shinyjs)
 
 library(plotly)
 library(tidyquant)
@@ -27,7 +28,7 @@ stock_list_tbl <- get_stock_list("SP500")
 
 # UI ----
 ui <- navbarPage(
-    title = "Stock Analyzer",
+    title = "WMD",
     inverse = FALSE,
     collapsible = TRUE,
     
@@ -41,12 +42,15 @@ ui <- navbarPage(
         tags$head(
             tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
         ),
+        
+        # JS ----
+        shinyjs::useShinyjs(),
 
         # 1.0 HEADER ----
         div(
             class = "container",
             id = "header",
-            h1(class = "page-header", "Stock Analyzer", tags$small("WM Duggan")),
+            h1(class = "page-header", "Stock Analyzer"),
             p(class = "lead", "Mini-project completed in", 
               a(href = "https://www.business-science.io/", target = "_blank", "Expert Shiny Applications Course (DS4B 202-R)"))
         ),
@@ -86,7 +90,7 @@ ui <- navbarPage(
                         hr(),
                         sliderInput(inputId = "mavg_short", label = "Short Moving Average", value = 20, min = 5, max = 40),
                         sliderInput(inputId = "mavg_long", label = "Long Moving Average", value = 50, min = 50, max = 120)
-                    ) 
+                    ) %>% hidden()
                 )
             ),
             column(
@@ -127,6 +131,11 @@ ui <- navbarPage(
 
 # SERVER ----
 server <- function(input, output, session) {
+    
+    # Toggle Input Settings ----
+    observeEvent(input$settings_toggle, {
+        toggle(id = "input_settings", anim = TRUE)
+    })
     
     # Stock Symbol ----
     stock_symbol <- eventReactive(input$analyze, {
