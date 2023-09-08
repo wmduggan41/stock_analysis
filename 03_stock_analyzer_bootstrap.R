@@ -46,8 +46,8 @@ ui <- navbarPage(
         div(
             class = "container",
             id = "header",
-            h1(class = "page-header", "Stock Analyzer", tags$small("by WM Duggan")),
-            p(class = "lead", "This is the first mini-project completed in the", 
+            h1(class = "page-header", "Stock Analyzer", tags$small("WM Duggan")),
+            p(class = "lead", "Mini-project completed in", 
               a(href = "https://www.business-science.io/", target = "_blank", "Expert Shiny Applications Course (DS4B 202-R)"))
         ),
         
