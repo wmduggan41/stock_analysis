@@ -16,10 +16,19 @@ library(shinyjs)
 library(plotly)
 library(tidyquant)
 library(tidyverse)
+library(zoo)
+library(pipeR)
+library(httr)
+library(jsonlite)
+library(DT)
 
 source(file = "00_scripts/stock_analysis_functions.R")
 
+api_key = "d24b8eafb5494dcf18753caad9043f4d"
+
 stock_list_tbl <- get_stock_list("SP500")
+
+gold_data <- get_gold_list(api_key = api_key)
 
 # UI ----
 ui <- navbarPage(
@@ -30,7 +39,7 @@ ui <- navbarPage(
     theme = shinytheme("paper"),
     
     tabPanel(
-        title = "Analysis",
+        title = "WM Duggan",
         
         # CSS ----
         shinythemes::themeSelector(),
@@ -45,11 +54,11 @@ ui <- navbarPage(
         div(
             class = "container",
             id = "header",
-            h1(class = "page-header", "Stock Analyzer", tags$small("by Business Science")),
-            p(class = "lead", "This is the first mini-project completed in our", 
+            h1(class = "page-header", "Stock Analyzer", tags$small("Business Science")),
+            p(class = "lead", "This is the first mini-project completed in", 
               a(href = "https://www.business-science.io/", target = "_blank", "Expert Shiny Applications Course (DS4B 202-R)"))
         ),
-        
+
         # 2.0 APPLICATION UI -----
         div(
             class = "container",
@@ -119,11 +128,29 @@ ui <- navbarPage(
                     )
                 )
             )
-        )
+        ),
+        
+        # 3.1 GOLD DATA ----
+        div(
+            class = "container",
+            id = "gold_data_plot",
+            column(
+                width = 12,
+                div(
+                    class = "panel",
+                    div(
+                        class = "panel-header",
+                        h4("Gold Price Trend")),
+                    div(
+                        class = "panel-body",
+                        plotlyOutput(outputId = "plotly_gold_plot")
+                    )
+                )
+            )
+        ),
     )
-    
 )
-
+    
 # SERVER ----
 server <- function(input, output, session) {
     
@@ -152,14 +179,24 @@ server <- function(input, output, session) {
                 mavg_long  = input$mavg_long)
     })
     
+    # Get Gold Price Data ----
+    gold_data_tbl <- reactive({
+        get_gold_list(api_key = api_key)
+    })
+    
     # Plot Header ----
     output$plot_header <- renderText({
         stock_selection_triggered()
     })
     
-    # Plotly Plot ----
+    # Plotly stock Plot ----
     output$plotly_plot <- renderPlotly({
         stock_data_tbl() %>% plot_stock_data()
+    })
+    
+    # Plotly Gold Plot ----
+    output$plotly_gold_plot <- renderPlotly({
+        ggplotly(plot_gold_data(gold_data_tbl()))
     })
     
     # Generate Commentary ----
@@ -168,6 +205,7 @@ server <- function(input, output, session) {
     })
     
 }
+
 
 # RUN APP ----
 shinyApp(ui = ui, server = server)
