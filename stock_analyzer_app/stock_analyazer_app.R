@@ -24,8 +24,6 @@ library(DT)
 
 source(file = "00_scripts/stock_analysis_functions.R")
 
-api_key = "d24b8eafb5494dcf18753caad9043f4d"
-
 stock_list_tbl <- get_stock_list("SP500")
 
 gold_data <- get_gold_list(api_key = api_key)

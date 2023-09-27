@@ -4,7 +4,7 @@ username: wmduggan
 account: wmduggan
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 10000303
+appId: 10001843
 bundleId:
 url: https://wmduggan.shinyapps.io/stock_analyzer_app/
 version: 1
