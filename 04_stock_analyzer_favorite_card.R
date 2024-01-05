@@ -46,16 +46,41 @@ ui <- navbarPage(
         div(
             class = "container",
             id = "header",
-            h1(class = "page-header", "Stock Analyzer", tags$small("by Business Science")),
+            h1(class = "page-header", "Stock Analyzer", tags$small("by WM Duggan")),
             p(class = "lead", "This is the first mini-project completed in our", 
               a(href = "https://www.business-science.io/", target = "_blank", "Expert Shiny Applications Course (DS4B 202-R)"))
         ),
         
         # 2.0 FAVORITES ----
         div(
-            class = "containre",
+            class = "container hidden-sm hidden-xs",
             id = "favorite_container",
-            p("Placeholder")
+        
+            div(
+                class = "container",
+                column(
+                    width = 12,
+                    h5("Favorites")
+                )
+            ),
+            div(
+                class = "container",
+                id = "favorite_cards",
+                column(
+                    width = 3,
+                    info_card(title     = "AAPL", 
+                              value     = HTML("20-Day <small>vs 50-Day</small>"), 
+                              sub_value = "20%")
+                ),
+                column(
+                    width = 3,
+                    info_card(title          = "NFLX", 
+                              value          = HTML("20-Day <small>vs 50-Day</small>"), 
+                              sub_value      = "-20%",
+                              sub_icon       = "arrow-down",
+                              sub_text_color = "danger")
+                )
+            )
         ),
         
         
