@@ -56,14 +56,14 @@ ui <- navbarPage(
             id = "favorite_container",
             
             div(
-                class = "container",
+                class = "",
                 column(
                     width = 12,
                     h5("Favorites")
                 )
             ),
             div(
-                class = "container",
+                class = "",
                 id = "favorite_cards",
                 column(
                     width = 3,
