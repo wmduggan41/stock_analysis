@@ -58,50 +58,65 @@ stock_data_favorites_tbl %>%
 # 3.0 Generate Favorite Card ----
 favorites <- favorite_list_on_start
 
-favorites %>%
-  # Step 1
-  map(.f = function(x) {
-    x %>%
-      get_stock_data(
-        mavg_short = 30,
-        mavg_long  = 90
-      )
-  }) %>%
-  set_names(favorites) %>%
-  
-  # Step 2
-  map(.f = function(data) {
-    data %>%
-      get_stock_mavg_info()
-  }) %>%
-  
-  # Step 3
-  bind_rows(.id = "stock") %>%
-  mutate(stock = as_factor(stock)) %>%
-  split(.$stock) %>%
-  
-  # Step 4
-  map(.f = function(data) {
-    
-    column(
-      width = 3,
-      info_card(
-        title = as.character(data$stock),
-        value = str_glue("{data$n_short}-Day <small>vs {data$n_long}-Day</small>") %>% HTML(),
-        sub_value      = data$pct_chg %>% scales::percent(),
-        sub_text_color = ifelse(data$mavg_warning_flag, "danger", "success"),
-        sub_icon       = ifelse(data$mavg_warning_flag, "arrow-down", "arrow-up")
-        
-      )
+generate_favorite_card <- function(data) {
+  column(
+    width = 3,
+    info_card(
+      title = as.character(data$stock),
+      value = str_glue("{data$n_short}-Day <small>vs {data$n_long}-Day</small>") %>% HTML(),
+      sub_value      = data$pct_chg %>% scales::percent(),
+      sub_text_color = ifelse(data$mavg_warning_flag, "danger", "success"),
+      sub_icon       = ifelse(data$mavg_warning_flag, "arrow-down", "arrow-up")
+      
     )
-    
-  })
-
+  )
+  
+}
 
 
 # 4.0 Generate All Favorite Cards in a TagList ----
+generate_favorite_cards <- function(favorites,
+                                    from = today() - days(180), to = today(),
+                                    mavg_short = 20, mavg_long = 50) {
+  
+  favorites %>%
+    # Step 1
+    map(.f = function(x) {
+      x %>%
+        get_stock_data(
+          from = from,
+          to = to,
+          mavg_short = mavg_short,
+          mavg_long  = mavg_long
+        )
+    }) %>%
+    set_names(favorites) %>%
+    
+    # Step 2
+    map(.f = function(data) {
+      data %>%
+        get_stock_mavg_info()
+    }) %>%
+    
+    # Step 3
+    bind_rows(.id = "stock") %>%
+    mutate(stock = as_factor(stock)) %>%
+    split(.$stock) %>%
+    
+    # Step 4
+    map(.f = function(data) {
+      data %>%
+        generate_favorite_card()
+    }) %>%
+    
+    # Step 5
+    tagList()
+  
+}
 
-
+generate_favorite_cards(favorites = c("NVDA", "AAPL"), 
+                        from = "2023-01-01", to = "2024-01-01",
+                        mavg_short = 30, mavg_long = 90)
 
 # 5.0 Save Functions ----
 dump(c("get_stock_mavg_info", "generate_favorite_card", 'generate_favorite_cards'), 
