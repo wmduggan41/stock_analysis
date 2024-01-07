@@ -23,6 +23,8 @@ source(file = "00_scripts/generate_favorite_cards.R")
 
 stock_list_tbl <- get_stock_list("SP500")
 
+current_user_favorites <- c("AAPL", "GOOG", "NFLX")
+
 # UI ----
 ui <- navbarPage(
     title = "Stock Analyzer",
@@ -60,26 +62,15 @@ ui <- navbarPage(
                 class = "",
                 column(
                     width = 12,
-                    h5("Favorites")
+                    h5(class = "pull-left", "Favorites"),
+                    actionButton(inputId = "favorites_clear", "Clear Favorites", class = "pull-right"),
+                    actionButton(inputId = "favorites_toggle", "Show/Hide", class = "pull-right")
                 )
             ),
             div(
-                class = "",
-                id = "favorite_cards",
-                column(
-                    width = 3,
-                    info_card(title     = "AAPL", 
-                              value     = HTML("20-Day <small>vs 50-Day</small>"), 
-                              sub_value = "20%")
-                ),
-                column(
-                    width = 3,
-                    info_card(title     = "NFLX", 
-                              value     = HTML("20-Day <small>vs 50-Day</small>"), 
-                              sub_value = "-20%", 
-                              sub_icon  = "arrow-down", 
-                              sub_text_color = "danger")
-                )
+                class = "row",
+                id = "favorite_card_section",
+                uiOutput(outputId = "favorite_cards", class = "container")
             )
         ),
         
@@ -110,6 +101,7 @@ ui <- navbarPage(
                         actionButton(inputId = "analyze", label = "Analyze", icon = icon("download")),
                         div(
                             class = "pull-right",
+                            actionButton(inputId = "favorites_add", label = NULL, icon = icon("heart")),
                             actionButton(inputId = "settings_toggle", label = NULL, icon = icon("cog"))
                         )
                     ),
@@ -174,7 +166,7 @@ server <- function(input, output, session) {
     stock_selection_triggered <- eventReactive(input$analyze, {
         input$stock_selection
     }, ignoreNULL = FALSE)
-
+    
     # Get Stock Data ----
     stock_data_tbl <- reactive({
         stock_symbol() %>% 
@@ -199,6 +191,85 @@ server <- function(input, output, session) {
     output$analyst_commentary <- renderText({
         generate_commentary(data = stock_data_tbl(), user_input = stock_selection_triggered())
     })
+    
+    # 2.0 FAVORITES ----
+    
+    # 2.1 Reactive Values - User Favorites ----
+    reactive_values <- reactiveValues()
+    reactive_values$favorites_list <- current_user_favorites
+    
+    # 2.2 Add Favorites ----
+    observeEvent(input$favorites_add, {
+        new_symbol <- get_symbol_from_user_input(input$stock_selection)
+        reactive_values$favorites_list <- c(reactive_values$favorites_list, new_symbol) %>% unique()
+    })
+    
+    # 2.3 Render Favorite Cards ----
+    output$favorite_cards <- renderUI({
+        
+        if (length(reactive_values$favorites_list) > 0) {
+            generate_favorite_cards(
+                favorites  = reactive_values$favorites_list,
+                from       = today() - days(180),
+                to         = today(),
+                mavg_short = input$mavg_short,
+                mavg_long  = input$mavg_long
+            )
+        }
+        
+    })
+    
+    # 2.4 Delete Favorites ----
+    observeEvent(input$favorites_clear, {
+        modalDialog(
+            title = "Clear Favorites",
+            size = "m",
+            easyClose = TRUE,
+            
+            p("Are you sure you want to remove favorites?"),
+            br(),
+            div(
+                selectInput(inputId = "drop_list",
+                            label   = "Remove Single Favorite",
+                            choices = reactive_values$favorites_list %>% sort()),
+                actionButton(inputId = "remove_single_favorite", 
+                             label   = "Clear Single", 
+                             class   = "btn-warning"),
+                actionButton(inputId = "remove_all_favorites", 
+                             label   = "Clear ALL Favorites", 
+                             class   = "btn-danger")
+            ),
+            
+            footer = modalButton("Exit")
+        ) %>% showModal()
+    })
+    
+    # 2.4.1 Clear Single ----
+    observeEvent(input$remove_single_favorite, {
+        
+        reactive_values$favorites_list <- reactive_values$favorites_list %>%
+            .[reactive_values$favorites_list != input$drop_list]
+        
+        updateSelectInput(session = session, 
+                          inputId = "drop_list", 
+                          choices = reactive_values$favorites_list %>% sort())
+    })
+    
+    # 2.4.2 Clear All ----
+    observeEvent(input$remove_all_favorites, {
+        
+        reactive_values$favorites_list <- NULL
+        
+        updateSelectInput(session = session, 
+                          inputId = "drop_list", 
+                          choices = reactive_values$favorites_list %>% sort())
+    })
+    
+    # 2.5 Show/Hide Favorites ----
+    observeEvent(input$favorites_toggle, {
+        shinyjs::toggle(id = "favorite_card_section", anim = TRUE, animType = "slide")
+    })
+    
     
 }
 
