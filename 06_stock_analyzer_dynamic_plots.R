@@ -31,7 +31,7 @@ ui <- navbarPage(
     inverse = FALSE,
     collapsible = TRUE,
     
-    theme = shinytheme("paper"),
+    theme = shinytheme("cyborg"),
     
     tabPanel(
         title = "Analysis",
@@ -57,7 +57,7 @@ ui <- navbarPage(
         div(
             class = "container hidden-sm hidden-xs",
             id = "favorite_container",
-            
+            # 2.1 USER INPUTS ----
             div(
                 class = "",
                 column(
@@ -67,6 +67,7 @@ ui <- navbarPage(
                     actionButton(inputId = "favorites_toggle", "Show/Hide", class = "pull-right")
                 )
             ),
+            # 2.2 FAVORITE CARDS ----
             div(
                 class = "row",
                 id = "favorite_card_section",
@@ -78,6 +79,8 @@ ui <- navbarPage(
         div(
             class = "container",
             id = "application_ui",
+            
+            # 3.1 USER INPUTS ----
             column(
                 width = 4, 
                 wellPanel(
@@ -113,19 +116,11 @@ ui <- navbarPage(
                     ) %>% hidden()
                 )
             ),
+            
+            # 3.2 PLOT PANEL ----
             column(
                 width = 8, 
-                div(
-                    class = "panel", 
-                    div(
-                        class = "panel-header",
-                        h4(textOutput(outputId = "plot_header"))
-                    ),
-                    div(
-                        class = "panel-body",
-                        plotlyOutput(outputId = "plotly_plot")
-                    )
-                )
+                uiOutput(outputId = "stock_charts")
             )
         ),
         
@@ -166,7 +161,7 @@ server <- function(input, output, session) {
     stock_selection_triggered <- eventReactive(input$analyze, {
         input$stock_selection
     }, ignoreNULL = FALSE)
-
+    
     # Get Stock Data ----
     stock_data_tbl <- reactive({
         stock_symbol() %>% 
@@ -200,8 +195,16 @@ server <- function(input, output, session) {
     
     # 2.2 Add Favorites ----
     observeEvent(input$favorites_add, {
+        
         new_symbol <- get_symbol_from_user_input(input$stock_selection)
-        reactive_values$favorites_list <- c(reactive_values$favorites_list, new_symbol) %>% unique()
+        new_symbol_already_in_favorites <- new_symbol %in% reactive_values$favorites_list
+        
+        if (!new_symbol_already_in_favorites) {
+            reactive_values$favorites_list <- c(reactive_values$favorites_list, new_symbol) %>% unique()
+            
+            updateTabsetPanel(session = session, inputId = "tab_panel_stock_chart", selected = new_symbol)
+        }
+        
     })
     
     # 2.3 Render Favorite Cards ----
@@ -268,6 +271,69 @@ server <- function(input, output, session) {
     # 2.5 Show/Hide Favorites ----
     observeEvent(input$favorites_toggle, {
         shinyjs::toggle(id = "favorite_card_section", anim = TRUE, animType = "slide")
+    })
+    
+    
+    # 3.0 FAVORITE PLOTS ----
+    
+    output$stock_charts <- renderUI({
+        
+        # First Tab Panel
+        tab_panel_1 <- tabPanel(
+            title = "Last Analysis",
+            div(
+                class = "panel", 
+                div(
+                    class = "panel-header",
+                    h4(stock_symbol())
+                ),
+                div(
+                    class = "panel-body",
+                    plotlyOutput(outputId = "plotly_plot")
+                )
+            )
+        )
+        
+        # Favorite Panels
+        favorite_tab_panels <- NULL
+        if (length(reactive_values$favorites_list) > 0) {
+            
+            favorite_tab_panels <- reactive_values$favorites_list %>%
+                map(.f = function(x) {
+                    tabPanel(
+                        title = x,
+                        div(
+                            class = "panel", 
+                            div(
+                                class = "panel-header",
+                                h4(x)
+                            ),
+                            div(
+                                class = "panel-body",
+                                
+                                x %>%
+                                    get_stock_data(
+                                        from = today() - days(180), 
+                                        to   = today(),
+                                        mavg_short = input$mavg_short,
+                                        mavg_long  = input$mavg_long
+                                    ) %>%
+                                    plot_stock_data()
+                            )
+                        )
+                    )
+                })
+            
+        }
+        
+        # Building the Tabset Panel
+        do.call(
+            what = tabsetPanel,
+            args = list(tab_panel_1) %>%
+                append(favorite_tab_panels) %>%
+                append(list(id = "tab_panel_stock_chart", type = "pills"))
+        )
+        
     })
     
     
