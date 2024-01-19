@@ -112,7 +112,8 @@ ui <- navbarPage(
                         id = "input_settings",
                         hr(),
                         sliderInput(inputId = "mavg_short", label = "Short Moving Average", value = 20, min = 5, max = 40),
-                        sliderInput(inputId = "mavg_long", label = "Long Moving Average", value = 50, min = 50, max = 120)
+                        sliderInput(inputId = "mavg_long", label = "Long Moving Average", value = 50, min = 50, max = 120),
+                        actionButton(inputId = "apply_and_save", label = "Apply & Save", icon = icon("save"))
                     ) %>% hidden()
                 )
             ),
@@ -147,47 +148,58 @@ ui <- navbarPage(
 # SERVER ----
 server <- function(input, output, session) {
     
-    # Toggle Input Settings ----
+    # 1.0 SETTINGS ----
+    
+    # 1.1 Toggle Input Settings ----
     observeEvent(input$settings_toggle, {
         toggle(id = "input_settings", anim = TRUE)
     })
     
-    # Stock Symbol ----
+    # 1.2 Stock Symbol ----
     stock_symbol <- eventReactive(input$analyze, {
         get_symbol_from_user_input(input$stock_selection)
     }, ignoreNULL = FALSE)
     
-    # User Input ----
+    # 1.3 User Input ----
     stock_selection_triggered <- eventReactive(input$analyze, {
         input$stock_selection
     }, ignoreNULL = FALSE)
     
-    # Get Stock Data ----
+    # 1.4 Apply & Save Settings ----
+    mavg_short <- eventReactive(input$apply_and_save, {
+        input$mavg_short
+    }, ignoreNULL = FALSE)
+    
+    mavg_long <- eventReactive(input$apply_and_save, {
+        input$mavg_long
+    }, ignoreNULL = FALSE)
+    
+    selected_tab <- eventReactive(input$apply_and_save, {
+        if (is.character(input$tab_panel_stock_chart)) {
+            # Tab already selected
+            selected_tab <- input$tab_panel_stock_chart
+        } else {
+            # Tab panel not built yet
+            selected_tab <- NULL
+        }
+        
+        selected_tab
+        
+    }, ignoreNULL = FALSE)
+    
+    # 1.5 Get Stock Data ----
     stock_data_tbl <- reactive({
         stock_symbol() %>% 
             get_stock_data(
                 from = today() - days(180), 
                 to   = today(),
-                mavg_short = input$mavg_short,
-                mavg_long  = input$mavg_long)
+                mavg_short = mavg_short(),
+                mavg_long  = mavg_long())
     })
     
-    # Plot Header ----
-    output$plot_header <- renderText({
-        stock_selection_triggered()
-    })
     
-    # Plotly Plot ----
-    output$plotly_plot <- renderPlotly({
-        stock_data_tbl() %>% plot_stock_data()
-    })
     
-    # Generate Commentary ----
-    output$analyst_commentary <- renderText({
-        generate_commentary(data = stock_data_tbl(), user_input = stock_selection_triggered())
-    })
-    
-    # 2.0 FAVORITES ----
+    # 2.0 FAVORITE CARDS ----
     
     # 2.1 Reactive Values - User Favorites ----
     reactive_values <- reactiveValues()
@@ -215,8 +227,8 @@ server <- function(input, output, session) {
                 favorites  = reactive_values$favorites_list,
                 from       = today() - days(180),
                 to         = today(),
-                mavg_short = input$mavg_short,
-                mavg_long  = input$mavg_long
+                mavg_short = mavg_short(),
+                mavg_long  = mavg_long()
             )
         }
         
@@ -273,8 +285,19 @@ server <- function(input, output, session) {
         shinyjs::toggle(id = "favorite_card_section", anim = TRUE, animType = "slide")
     })
     
+    # 3.0 FAVORITE PLOT ----
     
-    # 3.0 FAVORITE PLOTS ----
+    # 3.1 Plot Header ----
+    output$plot_header <- renderText({
+        stock_selection_triggered()
+    })
+    
+    # 3.2 Plotly Plot ----
+    output$plotly_plot <- renderPlotly({
+        stock_data_tbl() %>% plot_stock_data()
+    })
+    
+    # 3.3 Favorite Plots ----
     
     output$stock_charts <- renderUI({
         
@@ -315,8 +338,8 @@ server <- function(input, output, session) {
                                     get_stock_data(
                                         from = today() - days(180), 
                                         to   = today(),
-                                        mavg_short = input$mavg_short,
-                                        mavg_long  = input$mavg_long
+                                        mavg_short = mavg_short(),
+                                        mavg_long  = mavg_long()
                                     ) %>%
                                     plot_stock_data()
                             )
@@ -326,14 +349,23 @@ server <- function(input, output, session) {
             
         }
         
+        
+        
         # Building the Tabset Panel
         do.call(
             what = tabsetPanel,
             args = list(tab_panel_1) %>%
                 append(favorite_tab_panels) %>%
-                append(list(id = "tab_panel_stock_chart", type = "pills"))
+                append(list(id = "tab_panel_stock_chart", type = "pills", selected = selected_tab() ))
         )
         
+    })
+    
+    # 4.0 COMMENTARY ----
+    
+    # 4.1 Generate Commentary ----
+    output$analyst_commentary <- renderText({
+        generate_commentary(data = stock_data_tbl(), user_input = stock_selection_triggered())
     })
     
     
