@@ -57,7 +57,7 @@ ui <- tagList(
 server <- function(input, output, session) {
     
     # 0.0 READ DATA ----
-    user_base_tbl <- read_rds("00_data_local/user_base_tbl.rds")
+    user_base_tbl <<- read_rds("00_data_local/user_base_tbl.rds")
 
     # 0.0 USER LOGIN ----
     
