@@ -16,22 +16,43 @@ library(lubridate)
 # 1.0 CONNECTION TO REMOTE MONGODB ----
 
 # Setup config Package & database YAML
+Sys.setenv(R_CONFIG_ACTIVE = "default")
 
+config <- config::get(file = "config.yml")
+
+mongo_connect <- function(collection, database,
+                          host     = config$host,
+                          username = config$username,
+                          password = config$password) {
+  
+    mongo(
+      collection = collection,
+      url        = str_glue("mongodb+srv://{username}:{password}@{host}/{database}")
+    )
+}
 
 # Connect to MongoDB Atlas Cloud Database
-
+mongo_connect(collection = "mtcars", database = "rstats")
 
 # 2.0 ADD DATA ----
 
 # Connect to collection
-
+mongo_connection <- mongo_connect(collection = "mtcars", database = "rstats")
 
 # Adding data
-
+mtcars %>% 
+    as_tibble(rownames = "model") %>%
+    mongo_connection$insert() 
 
 # 3.0 QUERYING DATA ----
 
+mongo_connection$find()
 
+mongo_connection$find(limit = 6) %>% 
+  toJSON() %>% 
+  prettify()
+
+mongo_connection$find(query = '{"model": "Hornet Sportabout"}') %>% as_tibble()
 
 # 4.0 MODIFYING A COLLECTION ----
 
