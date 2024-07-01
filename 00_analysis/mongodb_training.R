@@ -74,17 +74,53 @@ new_car_tbl <- tibble(
 new_car_tbl
 
 # 4.1 Insert New Record
+mongo_connection$insert(new_car_tbl)
 
+mongo_connection$count()
+
+mongo_connection$find(query = '{"model": "Ford F150"}')
+
+tibble(
+    model = "Ford F150",
+) %>% 
+    toJSON() %>% 
+    str_remove_all(pattern = "^\\[|\\]$") %>% 
+    prettify() %>% 
+    mongo_connection$find(query = .) %>% 
+    as_tibble()
 
 # 4.2 Change a Record
 
+mongo_connection$update(
+    query = '{"model": "Ford F150"}',
+    update = '{"$set": {"mpg": 10.5}}'
+) # Confirm change by running tibble() query above
+
+mongo_connection$update(
+    query = '{"model": "Ford F250"}',
+    update = '{"$set": {"mpg": 10.8}}',
+    upsert = TRUE
+) 
+
+mongo_connection$find(query = '{"model": "Ford F250"}')
+
+mongo_connection$count()
+
+mongo_connection$find() %>% as_tibble() %>% tail()
 
 # 4.3 Remove a record
+mongo_connection$remove('{"model": "Ford F250"}')
 
+mongo_connection$find() %>% as_tibble() %>% tail()
 
 # 4.4 Remove entire table (be careful)
 
+mongo_connection$drop() # Deletes entire collection
 
+
+# 4.5 Disconnecting from Database ----
+
+mongo_connection$disconnect()
 
 
 # 5.0 NESTED STRUCTURES ----
@@ -111,12 +147,16 @@ user_base_tbl <- tibble(
 
 # Converting to JSON
 
+user_base_tbl %>% 
+    toJSON(POSIXt = "mongo") %>% 
+    prettify()
 
 # Adding nested structure to mongodb
+mongo_connection$insert(user_base_tbl)
 
 
 # Retrieve - Preserves nested structure and format
-
+mongo_connection$find() %>% as_tibble()
 
 
 # 6.0 STOCK ANALYZER APP - CRUD WORKFLOW -----
@@ -124,11 +164,14 @@ user_base_tbl <- tibble(
 # Create new collection
 mongo_connection <- mongo_connect(
     database   = "stock_analyzer",
-    collection = "user_base"
+    collection = "user_base_test"
 )
 
-# 6.1 Add User Data ----
+mongo_connection$drop()
+mongo_connection$count()
 
+# 6.1 Add User Data ----
+mongo_connection$insert(user_base_tbl)
 
 
 # 6.2 Get User Data ----
@@ -136,11 +179,35 @@ mongo_connection <- mongo_connect(
 #     user_base_tbl <<- read_rds(path = "00_data_local/user_base_tbl.rds")
 # }
 
+mongo_read_user_base <- function(database = "stock_analyzer", collection = "user_base_test") {
+  
+    mongo_connection <- mongo_connect(
+        database   = database,
+        collection = collection,
+        host       = config$host, 
+        username   = config$username, 
+        password   = config$password
+    )
+    
+    user_base_tbl <<- mongo_connection$find() %>% as_tibble()
+    
+    mongo_connection$disconnect()
+  
+}
 
+rm(user_base_tbl)
+
+mongo_read_user_base(database = "stock_analyzer", collection = "user_base")
 
 # 6.3 What shinyauthr does... ----
 
+user_1_tbl <- user_base_tbl %>% 
+    filter(
+        user     == "user1",
+        password == "pass1"
+    )
 
+user_1_tbl
 
 # 6.5 Update Mongo ----
 
