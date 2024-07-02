@@ -10,14 +10,17 @@ function(collection, database,
     )
 }
 mongo_read_user_base <-
-function(database = "stock_analyzer", collection = "user_base_test") {
+function(database = "stock_analyzer", collection = "user_base_test", 
+         host     = config$host,
+         username = config$username,
+         password = config$password) {
   
     mongo_connection <- mongo_connect(
         database   = database,
         collection = collection,
-        host       = config$host, 
-        username   = config$username, 
-        password   = config$password
+        host       = host, 
+        username   = username, 
+        password   = password
     )
     
     user_base_tbl <<- mongo_connection$find() %>% as_tibble()
@@ -27,17 +30,20 @@ function(database = "stock_analyzer", collection = "user_base_test") {
 }
 mongo_update_and_write_user_base <-
 function(user_name, column_name, assign_input, 
-                                             database   = "stock_analyzer", 
-                                             collection = "user_base_test") {
+         database   = "stock_analyzer", 
+         collection = "user_base_test",
+         host       = config$host,
+         username   = config$username,
+         password   = config$password) {
     
     user_base_tbl[user_base_tbl$user == user_name, ][[column_name]] <<- assign_input
     
     mongo_connection <- mongo_connect(
       database   = database,
       collection = collection,
-      host       = config$host, 
-      username   = config$username, 
-      password   = config$password
+      host       = host, 
+      username   = username, 
+      password   = password
     )
     
     # Query String
