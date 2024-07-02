@@ -70,11 +70,11 @@ server <- function(input, output, session) {
     
     # 0.0 READ USER BASE & AUTHENTICATE USER LOGIN ----
     mongo_read_user_base(
-      database   = database, 
-      collection = collection,
-      host       = config$host,
-      username   = config$username,
-      password   = config$password
+        database   = database, 
+        collection = collection,
+        host       = config$host,
+        username   = config$username,
+        password   = config$password
       )  
   
     # 0.1 Return user_base_tbl - To Global Environment -----
@@ -163,10 +163,15 @@ server <- function(input, output, session) {
             time_window = input$time_window
         )
         
-        update_and_write_user_base(
+        mongo_update_and_write_user_base(
             user_name    = credentials()$info$user, 
             column_name  = "user_settings",
-            assign_input = list(user_settings_tbl)
+            assign_input = list(user_settings_tbl),
+            database     = database,
+            collection   = collection,
+            host         = config$host,
+            username     = config$username,
+            password     = config$password
         )
     })
     
@@ -224,10 +229,15 @@ server <- function(input, output, session) {
             
             updateTabsetPanel(session = session, inputId = "tab_panel_stock_chart", selected = new_symbol)
             
-            update_and_write_user_base(
+            mongo_update_and_write_user_base(
                 user_name = credentials()$info$user,
                 column_name = "favorites",
-                assign_input = list(reactive_values$favorites_list)
+                assign_input = list(reactive_values$favorites_list),
+                database     = database,
+                collection   = collection,
+                host         = config$host,
+                username     = config$username,
+                password     = config$password
             )
         }
         
@@ -283,10 +293,15 @@ server <- function(input, output, session) {
                           inputId = "drop_list", 
                           choices = reactive_values$favorites_list %>% sort())
         
-        update_and_write_user_base(
+        mongo_update_and_write_user_base(
             user_name    = credentials()$info$user,
             column_name  = "favorites",
-            assign_input = list(reactive_values$favorites_list)
+            assign_input = list(reactive_values$favorites_list),
+            database     = database,
+            collection   = collection,
+            host         = config$host,
+            username     = config$username,
+            password     = config$password
         )
     })
     
@@ -299,10 +314,15 @@ server <- function(input, output, session) {
                           inputId = "drop_list", 
                           choices = reactive_values$favorites_list %>% sort())
         
-        update_and_write_user_base(
+        mongo_update_and_write_user_base(
             user_name    = credentials()$info$user,
             column_name  = "favorites",
-            assign_input = list(reactive_values$favorites_list)
+            assign_input = list(reactive_values$favorites_list),
+            database     = database,
+            collection   = collection,
+            host         = config$host,
+            username     = config$username,
+            password     = config$password
         )
     })
     
