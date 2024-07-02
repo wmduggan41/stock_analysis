@@ -50,7 +50,7 @@ function(user_name, column_name, assign_input,
     query_string <- str_c('{"user": "', user_name, '"}')
     
     # Update String
-    update_strng <- user_base_tbl %>% 
+    update_string <- user_base_tbl %>% 
         filter(user == user_name) %>% 
         select(-user, -password, -permissions) %>%
         toJSON(POSIXt = "mongo") %>% 
