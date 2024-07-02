@@ -15,6 +15,10 @@ library(shinythemes)
 library(shinyjs)
 library(shinyauthr)  # devtools::install_github("business-science/shinyauthr")
 
+library(mongolite)
+library(jsonlite)
+library(config)
+
 library(plotly)
 library(tidyquant)
 library(tidyverse)
@@ -24,6 +28,12 @@ source(file = "00_scripts/info_card.R")
 source(file = "00_scripts/panel_card.R")
 source(file = "00_scripts/generate_favorite_cards.R")
 source(file = "00_scripts/crud_operations_local.R")
+source(file = "00_scripts/crud_operations_mongodb.R")
+
+Sys.setenv(R_CONFIG_ACTIVE = "default")
+config <- config::get(file = "config.yml")
+database   <- "stock_analyzer"
+collection <- "user_base_test"
 
 stock_list_tbl <- get_stock_list("SP500")
 
@@ -58,8 +68,15 @@ ui <- tagList(
 server <- function(input, output, session) {
     
     
-   # 0.0 READ USER BASE & AUTHENTICATE USER LOGIN ----
-    
+    # 0.0 READ USER BASE & AUTHENTICATE USER LOGIN ----
+    mongo_read_user_base(
+      database   = database, 
+      collection = collection,
+      host       = config$host,
+      username   = config$username,
+      password   = config$password
+      )  
+  
     # 0.1 Return user_base_tbl - To Global Environment -----
     read_user_base()
     
@@ -116,10 +133,15 @@ server <- function(input, output, session) {
     
     # 1.2 Stock Symbol ----
     observeEvent(input$analyze, {
-        update_and_write_user_base(
+        mongo_update_and_write_user_base(
             user_name    = credentials()$info$user,
             column_name  = "last_symbol", 
-            assign_input = get_symbol_from_user_input(input$stock_selection)
+            assign_input = get_symbol_from_user_input(input$stock_selection),
+            database     = database,
+            collection   = collection,
+            host         = config$host,
+            username     = config$username,
+            password     = config$password
         )
     })
     
