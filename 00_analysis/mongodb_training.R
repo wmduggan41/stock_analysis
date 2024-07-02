@@ -218,9 +218,13 @@ pluck(user_1_tbl, "favorites", 1)
 
 # 6.5 Update Mongo ----
 
-update_and_write_user_base <- function(user_name, column_name, assign_input, 
-                                       database   = "stock_analyzer", 
-                                       collection = "user_base_test") {
+user_name <- "user1"
+
+# mongo_connection$find(query = query_string)
+
+mongo_update_and_write_user_base <- function(user_name, column_name, assign_input, 
+                                             database   = "stock_analyzer", 
+                                             collection = "user_base_test") {
     
     user_base_tbl[user_base_tbl$user == user_name, ][[column_name]] <<- assign_input
     
@@ -232,29 +236,45 @@ update_and_write_user_base <- function(user_name, column_name, assign_input,
       password   = config$password
     )
     
-    # Query
+    # Query String
+    query_string <- str_c('{{"user": "', user_name, '"}}')
+    
+    # Update String
+    user_base_tbl %>% 
+        filter(user == user_name) %>% 
+        select(-user, -oassword, -permissions) %>%
+        toJSON(POSIXt = "mongo") %>% 
+        str_remove_all(pattern = "^\\[|\\]$")
     
     # Update
-    
     mongo_connection$update(
-        query = '{"model": "Ford F150"}',
-        update = '{"$set": {"mpg": 10.5}}'
+        query  = query_string,
+        update = str_c('{"$set": ', update_string, '}')
       )
     
-    write_rds(user_base_tbl, path = "00_data_local/user_base_tbl.rds")
+    mongo_connection$disconnect()
 }
 
 
 
 # Before update
+mongo_connection$find()
 
 
 # After update
-
+mongo_update_and_write_user_base(
+  user_name     = "user1", 
+  column_name   = "user_settings", 
+  assign_input  = list(tibble(
+    mavg_short  = 15,
+    mavg_long   = 75,
+    time_window = 720
+  ))
+)
 
 # 7.0 Save Functions ----
 
-dump(c("mongo_connect", "mongo_get_user_base", "mongo_update_user_record"), 
+dump(c("mongo_connect", "mongo_read_user_base", "mongo_update_and_write_user_base"), 
      file = "00_scripts/crud_operations_mongodb.R", append = FALSE)
 
 
