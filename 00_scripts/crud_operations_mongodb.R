@@ -39,11 +39,11 @@ function(user_name, column_name, assign_input,
     user_base_tbl[user_base_tbl$user == user_name, ][[column_name]] <<- assign_input
     
     mongo_connection <- mongo_connect(
-      database   = database,
-      collection = collection,
-      host       = host, 
-      username   = username, 
-      password   = password
+        database   = database,
+        collection = collection,
+        host       = host, 
+        username   = username, 
+        password   = password
     )
     
     # Query String
@@ -52,7 +52,7 @@ function(user_name, column_name, assign_input,
     # Update String
     user_base_tbl %>% 
         filter(user == user_name) %>% 
-        select(-user, -oassword, -permissions) %>%
+        select(-user, -password, -permissions) %>%
         toJSON(POSIXt = "mongo") %>% 
         str_remove_all(pattern = "^\\[|\\]$")
     
